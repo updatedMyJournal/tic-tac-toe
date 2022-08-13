@@ -1,0 +1,30 @@
+.player-wrapper {
+  display: flex;
+  gap: 100px;
+
+  margin-bottom: 50px;
+  font-size: var(--player-font-size);
+}
+
+.player1, 
+.player2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  vertical-align: middle;
+
+  width: 100px;
+  height: 30px;
+  padding: 10px;
+  border: 1px solid lightgray;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.player1:hover {
+  box-shadow: 0 3px 1px cyan;
+}
+
+.player2:hover {
+  box-shadow: 0 3px 1px lightcoral;
+}

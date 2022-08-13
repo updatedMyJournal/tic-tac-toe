@@ -1,7 +1,31 @@
+:root {
+  --bg-color: 237, 237, 237;
+  --player-font-size: calc(1.5 * var(--scale0));
+  --gameboard-font-size: 80px;
+
+  --scale0: 1rem;
+}
+
 html {
   box-sizing: border-box;
+  font-size: 100%;
 }
 
 *, *::before, *::after {
   box-sizing: inherit;
+}
+
+body {
+  background-color: rgb(var(--bg-color));
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  min-width: fit-content;
+  max-width: 1300px;
+  padding: 30px 5px;
+  margin: auto;
 }
