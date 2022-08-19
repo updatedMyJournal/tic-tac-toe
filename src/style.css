@@ -52,11 +52,11 @@ main {
   cursor: pointer;
 }
 
-.X-player.selected {
+.X-player.backlight {
   box-shadow: 0 3px 1px cyan;
 }
 
-.O-player.selected {
+.O-player.backlight {
   box-shadow: 0 3px 1px lightcoral;
 }
 

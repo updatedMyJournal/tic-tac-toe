@@ -1,29 +1,131 @@
-let mainPlayer, secondPlayer;
-
 const gameBoard = new class {
-  #overlayElem = document.querySelector('.overlay');
-  #overlayMessageElem = document.querySelector('.message'); 
+  #boardElem = document.querySelector('.gameboard');
 
   constructor() {
     this.board = new Array(9);
+
+    this.#boardElem.onclick = (e) => {
+      const field = e.target.closest('.field');
+    
+      if (!field) return;
+    
+      if (gameFlow.isItFirstTurn) gameFlow.startGame();
+    
+      if (!displayController.isMarkAllowed(field)) return;
+    
+      this.#setMark(field.dataset.fieldId);
+      setTimeout(() => gameFlow.nextTurn());
+    };
   }
 
-  setMark(mark, index) {
+  #setMark(index) {
+    const mark = gameFlow.currentPlayer.mark;
+
     this.board[index] = mark;
     document.querySelector(`.field[data-field-id="${index}"]`).textContent = mark;
   }
 
   reset() {
-    for (let field of boardElem.querySelectorAll('.field')) {
+    for (let field of this.#boardElem.querySelectorAll('.field')) {
       field.textContent = '';
     }
 
     this.board = new Array(9);
   }
+}
+
+const gameFlow = new class {
+  #playerWrapperElem = document.querySelector('.player-wrapper');
+  #mainPlayerElem = document.querySelector('.selectedByPlayer');
+
+  mainPlayer;
+  secondPlayer;
+  currentPlayer;
+  winner;
+
+  isItFirstTurn = true;
+
+  constructor() {
+    this.#playerWrapperElem.onclick = this.onPlayerElemClick.bind(this);
+  }
+
+  selectMainPlayer(mark) {
+    this.mainPlayer = new Player(mark);
+    this.currentPlayer = this.mainPlayer;
+    this.#selectSecondPlayer();
+  }
+
+  #selectSecondPlayer() {
+    this.secondPlayer = this.mainPlayer.mark === 'X' ? new Player('O') : new Player('X');
+  }
+
+  startGame() {
+    if (!this.mainPlayer) {
+      const mark = this.#getMarkFromElem(this.#mainPlayerElem);
+      
+      this.selectMainPlayer(mark);
+    }
+
+    this.currentPlayer = this.mainPlayer;
+    this.#playerWrapperElem.onclick = null;
+    this.isItFirstTurn = false;
+  }
+
+  finishGame() {
+    gameBoard.reset();
+    this.winner = null;
+    this.#playerWrapperElem.onclick = this.onPlayerElemClick.bind(this);
+    this.isItFirstTurn = true;
+
+    this.mainPlayer.toggleBacklight();
+    displayController.hideOverlay();
+    displayController.setOverlayMessage('');
+
+    this.mainPlayer = null;
+    this.secondPlayer = null;
+  }
+
+  nextTurn() {
+    if (displayController.isGameOver()) {
+      displayController.showOverlay();
+
+      if (!this.winner) {
+        displayController.setOverlayMessage(`It's a draw!`);
+      } else {
+        displayController.setOverlayMessage(`The winner is: ${this.winner.mark}`);
+      }
+
+      return;
+    }
+
+    this.currentPlayer = this.currentPlayer === this.mainPlayer ? this.secondPlayer : this.mainPlayer;
+    this.currentPlayer.toggleBacklight();
+  }
+
+  onPlayerElemClick(e) {
+    let clickedPlayerElem = e.target.closest('.X-player, .O-player');
+
+    if (!clickedPlayerElem) return;
+    
+    const mark = this.#getMarkFromElem(clickedPlayerElem);
+
+    this.selectMainPlayer(mark);
+    this.#mainPlayerElem = clickedPlayerElem;
+    this.mainPlayer.toggleBacklight();
+  }
+
+  #getMarkFromElem(elem) {
+    return elem.className.includes('X') ? 'X' : 'O';
+  }
+}
+
+const displayController = new class {
+  #overlayElem = document.querySelector('.overlay');
+  #overlayMessageElem = this.#overlayElem.querySelector('.message');
 
   showOverlay() {
     this.#overlayElem.style.visibility = 'visible';
-    this.#overlayElem.onclick = gameFlow.finishGame;
+    this.#overlayElem.onclick = gameFlow.finishGame.bind(gameFlow);
   }
 
   hideOverlay() {
@@ -34,78 +136,7 @@ const gameBoard = new class {
   setOverlayMessage(str) {
     this.#overlayMessageElem.textContent = str;
   }
-}
 
-const gameFlow = new class {
-  #turn = 1;
-  #winner;
-  currentPlayer;
-
-  #playerWrapperElem = document.querySelector('.player-wrapper');
-
-  selectPlayer(mark) {
-    mainPlayer = new Player(mark);
-    secondPlayer = mainPlayer.mark === 'X' ? new Player('O') : new Player('X');
-    this.currentPlayer = mainPlayer;
-  }
-
-  startGame() {
-    const selectedPlayer = this.#playerWrapperElem.querySelector('.selected');
-    // create a function
-    const mark = selectedPlayer.className.includes('X') ? 'X' : 'O';
-
-    this.selectPlayer(mark);
-    gameFlow.currentPlayer = mainPlayer;
-
-    this.#playerWrapperElem.onclick = null;
-  }
-
-  finishGame = () => {
-    gameBoard.reset();
-    this.#turn = 1;
-    this.winner = null;
-    this.#playerWrapperElem.onclick = displayController.onPlayerElemClick;
-
-    gameBoard.hideOverlay();
-    gameBoard.setOverlayMessage('');
-    mainPlayer = null;
-    secondPlayer = null;
-  }
-
-  isItFirstTurn() {
-    return this.#turn === 1;
-  }
-
-  nextTurn(mainPlayer, secondPlayer) {
-    if (displayController.isGameOver()) {
-      gameBoard.showOverlay();
-
-      if (!this.winner) {
-        gameBoard.setOverlayMessage(`It's a draw!`);
-      } else {
-        gameBoard.setOverlayMessage(`The winner is: ${this.winner.mark}`);
-      }
-
-      return;
-    }
-
-    this.currentPlayer = this.currentPlayer === mainPlayer ? secondPlayer : mainPlayer;
-    this.currentPlayer.toggleBacklight();
-
-    // consider changing to boolean
-    this.#turn++;
-  }
-
-  set winner(val) {
-    this.#winner = val;
-  }
-
-  get winner() {
-    return this.#winner;
-  }
-}
-
-const displayController = new class {
   isMarkAllowed(elem) {
     return elem.textContent === '';
   }
@@ -125,38 +156,38 @@ const displayController = new class {
       for (let j = 0; j < 3; j++, k++) {
         if (gameBoard.board[k]) totalCounter++;
 
-        if (gameBoard.board[k] == mainPlayer.mark) {
+        if (gameBoard.board[k] == gameFlow.mainPlayer.mark) {
           p1RowCounter++;
-        } else if (gameBoard.board[k] == secondPlayer.mark) {
+        } else if (gameBoard.board[k] == gameFlow.secondPlayer.mark) {
           p2RowCounter++;
         }
       }
 
       if (p1RowCounter >= 3) {
-        gameFlow.winner = mainPlayer;
+        gameFlow.winner = gameFlow.mainPlayer;
 
         return true;
       } else if (p2RowCounter >= 3) {
-        gameFlow.winner = secondPlayer;
+        gameFlow.winner = gameFlow.secondPlayer;
 
         return true;
       }
 
       //columns
       for (let j = i; j < 9; j += 3) {
-        if (gameBoard.board[j] == mainPlayer.mark) {
+        if (gameBoard.board[j] == gameFlow.mainPlayer.mark) {
           p1ColumnCounter++;
-        } else if (gameBoard.board[j] == secondPlayer.mark) {
+        } else if (gameBoard.board[j] == gameFlow.secondPlayer.mark) {
           p2ColumnCounter++;
         }
       }
 
       if (p1ColumnCounter >= 3) {
-        gameFlow.winner = mainPlayer;
+        gameFlow.winner = gameFlow.mainPlayer;
 
         return true;
       } else if (p2ColumnCounter >= 3) {
-        gameFlow.winner = secondPlayer;
+        gameFlow.winner = gameFlow.secondPlayer;
 
         return true;
       }
@@ -164,18 +195,18 @@ const displayController = new class {
 
     // diagonals
     for (let j = 0; j < 9; j += 4) {
-      if (gameBoard.board[j] == mainPlayer.mark) {
+      if (gameBoard.board[j] == gameFlow.mainPlayer.mark) {
         p1DiagonalCounter++;
-      } else if (gameBoard.board[j] == secondPlayer.mark) {
+      } else if (gameBoard.board[j] == gameFlow.secondPlayer.mark) {
         p2DiagonalCounter++;
       }
 
       if (p1DiagonalCounter >= 3) {
-        gameFlow.winner = mainPlayer;
+        gameFlow.winner = gameFlow.mainPlayer;
 
         return true;
       } else if (p2DiagonalCounter >= 3) {
-        gameFlow.winner = secondPlayer
+        gameFlow.winner = gameFlow.secondPlayer
 
         return true;
       }
@@ -185,18 +216,18 @@ const displayController = new class {
     p2DiagonalCounter = 0;
 
     for (let j = 2; j <= 6; j += 2) {
-      if (gameBoard.board[j] == mainPlayer.mark) {
+      if (gameBoard.board[j] == gameFlow.mainPlayer.mark) {
         p1DiagonalCounter++;
-      } else if (gameBoard.board[j] == secondPlayer.mark) {
+      } else if (gameBoard.board[j] == gameFlow.secondPlayer.mark) {
         p2DiagonalCounter++;
       }
 
       if (p1DiagonalCounter >= 3) {
-        gameFlow.winner = mainPlayer;
+        gameFlow.winner = gameFlow.mainPlayer;
 
         return true;
       } else if (p2DiagonalCounter >= 3) {
-        gameFlow.winner = secondPlayer;
+        gameFlow.winner = gameFlow.secondPlayer;
 
         return true;
       }
@@ -207,18 +238,6 @@ const displayController = new class {
 
     return false;
   }
-
-  onPlayerElemClick(e) {
-    let clickedPlayerElem = e.target.closest('.X-player, .O-player');
-
-    if (!clickedPlayerElem) return;
-
-    const mark = clickedPlayerElem.className.includes('X') ? 'X' : 'O';
-
-    gameFlow.selectPlayer(mark);
-    mainPlayer.toggleBacklight();
-  }
-
 }
 
 class Player {
@@ -229,32 +248,9 @@ class Player {
     this.mark = mark;
   }
 
-  // change to static?
   toggleBacklight() {
-    this.#xPlayerElem.classList.remove('selected');
-    this.#oPlayerElem.classList.remove('selected');
-    document.querySelector(`.${this.mark}-player`).classList.add('selected');
+    this.#xPlayerElem.classList.remove('backlight');
+    this.#oPlayerElem.classList.remove('backlight');
+    document.querySelector(`.${this.mark}-player`).classList.add('backlight');
   }
 }
-
-// move to another place
-const boardElem = document.querySelector('.gameboard');
-
-const playerWrapperElem = document.querySelector('.player-wrapper');
-
-playerWrapperElem.onclick = displayController.onPlayerElemClick;
-
-boardElem.onclick = (e) => {
-  const field = e.target.closest('.field');
-
-  if (!field) return;
-
-  if (gameFlow.isItFirstTurn()) gameFlow.startGame();
-
-  if (!displayController.isMarkAllowed(field)) return;
-
-  gameBoard.setMark(gameFlow.currentPlayer.mark, field.dataset.fieldId);
-
-  // FIX LATER
-  setTimeout(() => gameFlow.nextTurn(mainPlayer, secondPlayer));
-};
