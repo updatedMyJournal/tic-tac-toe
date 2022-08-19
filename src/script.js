@@ -1,8 +1,9 @@
-//  X O 
-
-let player1, player2;
+let mainPlayer, secondPlayer;
 
 const gameBoard = new class {
+  #overlayElem = document.querySelector('.overlay');
+  #overlayMessageElem = document.querySelector('.message'); 
+
   constructor() {
     this.board = new Array(9);
   }
@@ -19,45 +20,79 @@ const gameBoard = new class {
 
     this.board = new Array(9);
   }
+
+  showOverlay() {
+    this.#overlayElem.style.visibility = 'visible';
+    this.#overlayElem.onclick = gameFlow.finishGame;
+  }
+
+  hideOverlay() {
+    this.#overlayElem.style.visibility = '';
+    this.#overlayElem.onclick = null;
+  }
+
+  setOverlayMessage(str) {
+    this.#overlayMessageElem.textContent = str;
+  }
 }
 
 const gameFlow = new class {
   #turn = 1;
   #winner;
-  // possibly make private
   currentPlayer;
 
-  startGame() {
-    // CHANGE LATER
-    player1 = new Player('X');
-    player2 = new Player('O');
-    gameFlow.currentPlayer = player1;
+  #playerWrapperElem = document.querySelector('.player-wrapper');
+
+  selectPlayer(mark) {
+    mainPlayer = new Player(mark);
+    secondPlayer = mainPlayer.mark === 'X' ? new Player('O') : new Player('X');
+    this.currentPlayer = mainPlayer;
   }
 
-  finishGame() {
+  startGame() {
+    const selectedPlayer = this.#playerWrapperElem.querySelector('.selected');
+    // create a function
+    const mark = selectedPlayer.className.includes('X') ? 'X' : 'O';
+
+    this.selectPlayer(mark);
+    gameFlow.currentPlayer = mainPlayer;
+
+    this.#playerWrapperElem.onclick = null;
+  }
+
+  finishGame = () => {
     gameBoard.reset();
     this.#turn = 1;
     this.winner = null;
+    this.#playerWrapperElem.onclick = displayController.onPlayerElemClick;
+
+    gameBoard.hideOverlay();
+    gameBoard.setOverlayMessage('');
+    mainPlayer = null;
+    secondPlayer = null;
   }
 
   isItFirstTurn() {
     return this.#turn === 1;
   }
 
-  nextTurn(player1, player2) {
+  nextTurn(mainPlayer, secondPlayer) {
     if (displayController.isGameOver()) {
-      if (!this.winner) {
-        alert(`It's a draw!`);
-      } else {
-        alert('The winner is: ' + this.winner.mark);
-      }
+      gameBoard.showOverlay();
 
-      this.finishGame();
+      if (!this.winner) {
+        gameBoard.setOverlayMessage(`It's a draw!`);
+      } else {
+        gameBoard.setOverlayMessage(`The winner is: ${this.winner.mark}`);
+      }
 
       return;
     }
 
-    this.currentPlayer = this.currentPlayer === player1 ? player2 : player1;
+    this.currentPlayer = this.currentPlayer === mainPlayer ? secondPlayer : mainPlayer;
+    this.currentPlayer.toggleBacklight();
+
+    // consider changing to boolean
     this.#turn++;
   }
 
@@ -90,38 +125,38 @@ const displayController = new class {
       for (let j = 0; j < 3; j++, k++) {
         if (gameBoard.board[k]) totalCounter++;
 
-        if (gameBoard.board[k] == player1.mark) {
+        if (gameBoard.board[k] == mainPlayer.mark) {
           p1RowCounter++;
-        } else if (gameBoard.board[k] == player2.mark) {
+        } else if (gameBoard.board[k] == secondPlayer.mark) {
           p2RowCounter++;
         }
       }
 
       if (p1RowCounter >= 3) {
-        gameFlow.winner = player1;
+        gameFlow.winner = mainPlayer;
 
         return true;
       } else if (p2RowCounter >= 3) {
-        gameFlow.winner = player2;
+        gameFlow.winner = secondPlayer;
 
         return true;
       }
 
       //columns
       for (let j = i; j < 9; j += 3) {
-        if (gameBoard.board[j] == player1.mark) {
+        if (gameBoard.board[j] == mainPlayer.mark) {
           p1ColumnCounter++;
-        } else if (gameBoard.board[j] == player2.mark) {
+        } else if (gameBoard.board[j] == secondPlayer.mark) {
           p2ColumnCounter++;
         }
       }
 
       if (p1ColumnCounter >= 3) {
-        gameFlow.winner = player1;
+        gameFlow.winner = mainPlayer;
 
         return true;
       } else if (p2ColumnCounter >= 3) {
-        gameFlow.winner = player2;
+        gameFlow.winner = secondPlayer;
 
         return true;
       }
@@ -129,18 +164,18 @@ const displayController = new class {
 
     // diagonals
     for (let j = 0; j < 9; j += 4) {
-      if (gameBoard.board[j] == player1.mark) {
+      if (gameBoard.board[j] == mainPlayer.mark) {
         p1DiagonalCounter++;
-      } else if (gameBoard.board[j] == player2.mark) {
+      } else if (gameBoard.board[j] == secondPlayer.mark) {
         p2DiagonalCounter++;
       }
 
       if (p1DiagonalCounter >= 3) {
-        gameFlow.winner = player1;
+        gameFlow.winner = mainPlayer;
 
         return true;
       } else if (p2DiagonalCounter >= 3) {
-        gameFlow.winner = player2
+        gameFlow.winner = secondPlayer
 
         return true;
       }
@@ -150,18 +185,18 @@ const displayController = new class {
     p2DiagonalCounter = 0;
 
     for (let j = 2; j <= 6; j += 2) {
-      if (gameBoard.board[j] == player1.mark) {
+      if (gameBoard.board[j] == mainPlayer.mark) {
         p1DiagonalCounter++;
-      } else if (gameBoard.board[j] == player2.mark) {
+      } else if (gameBoard.board[j] == secondPlayer.mark) {
         p2DiagonalCounter++;
       }
 
       if (p1DiagonalCounter >= 3) {
-        gameFlow.winner = player1;
+        gameFlow.winner = mainPlayer;
 
         return true;
       } else if (p2DiagonalCounter >= 3) {
-        gameFlow.winner = player2;
+        gameFlow.winner = secondPlayer;
 
         return true;
       }
@@ -173,15 +208,41 @@ const displayController = new class {
     return false;
   }
 
+  onPlayerElemClick(e) {
+    let clickedPlayerElem = e.target.closest('.X-player, .O-player');
+
+    if (!clickedPlayerElem) return;
+
+    const mark = clickedPlayerElem.className.includes('X') ? 'X' : 'O';
+
+    gameFlow.selectPlayer(mark);
+    mainPlayer.toggleBacklight();
+  }
+
 }
 
 class Player {
+  #xPlayerElem = document.querySelector('.X-player');
+  #oPlayerElem = document.querySelector('.O-player');
+
   constructor(mark) {
     this.mark = mark;
   }
+
+  // change to static?
+  toggleBacklight() {
+    this.#xPlayerElem.classList.remove('selected');
+    this.#oPlayerElem.classList.remove('selected');
+    document.querySelector(`.${this.mark}-player`).classList.add('selected');
+  }
 }
 
+// move to another place
 const boardElem = document.querySelector('.gameboard');
+
+const playerWrapperElem = document.querySelector('.player-wrapper');
+
+playerWrapperElem.onclick = displayController.onPlayerElemClick;
 
 boardElem.onclick = (e) => {
   const field = e.target.closest('.field');
@@ -195,5 +256,5 @@ boardElem.onclick = (e) => {
   gameBoard.setMark(gameFlow.currentPlayer.mark, field.dataset.fieldId);
 
   // FIX LATER
-  setTimeout(() => gameFlow.nextTurn(player1, player2));
+  setTimeout(() => gameFlow.nextTurn(mainPlayer, secondPlayer));
 };

@@ -2,6 +2,8 @@
   display: grid;
   grid-template-rows: repeat(3, 100px);
   grid-template-columns: repeat(3, 100px);
+
+  position: relative;
 }
 
 .field {
@@ -48,4 +50,18 @@
 .field:nth-child(9) {
   border-right: none;
   border-bottom: none;
+}
+
+.overlay {
+  visibility: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: cyan;
+
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
 }

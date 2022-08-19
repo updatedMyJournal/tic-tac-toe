@@ -3,7 +3,9 @@
   --player-font-size: calc(1.5 * var(--scale0));
   --gameboard-font-size: 80px;
 
+  --interval: 1.1;
   --scale0: 1rem;
+  --scale1: calc(var(--scale0) * var(--interval));
 }
 
 html {

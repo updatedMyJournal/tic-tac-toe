@@ -1,13 +1,11 @@
 .player-wrapper {
   display: flex;
   gap: 100px;
-
-  margin-bottom: 50px;
   font-size: var(--player-font-size);
 }
 
-.player1, 
-.player2 {
+.X-player, 
+.O-player {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -21,10 +19,15 @@
   cursor: pointer;
 }
 
-.player1:hover {
+.X-player.selected {
   box-shadow: 0 3px 1px cyan;
 }
 
-.player2:hover {
+.O-player.selected {
   box-shadow: 0 3px 1px lightcoral;
+}
+
+.log {
+  margin: 30px 0;
+  font-size: var(--scale1);
 }

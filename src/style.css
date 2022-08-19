@@ -2,7 +2,9 @@
   --bg-color: 237, 237, 237;
   --player-font-size: calc(1.5 * var(--scale0));
   --gameboard-font-size: 80px;
+  --interval: 1.1;
   --scale0: 1rem;
+  --scale1: calc(var(--scale0) * var(--interval));
 }
 
 html {
@@ -33,12 +35,11 @@ main {
 .player-wrapper {
   display: flex;
   gap: 100px;
-  margin-bottom: 50px;
   font-size: var(--player-font-size);
 }
 
-.player1,
-.player2 {
+.X-player,
+.O-player {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -51,18 +52,24 @@ main {
   cursor: pointer;
 }
 
-.player1:hover {
+.X-player.selected {
   box-shadow: 0 3px 1px cyan;
 }
 
-.player2:hover {
+.O-player.selected {
   box-shadow: 0 3px 1px lightcoral;
+}
+
+.log {
+  margin: 30px 0;
+  font-size: var(--scale1);
 }
 
 .gameboard {
   display: grid;
   grid-template-rows: repeat(3, 100px);
   grid-template-columns: repeat(3, 100px);
+  position: relative;
 }
 
 .field {
@@ -107,4 +114,17 @@ main {
 .field:nth-child(9) {
   border-right: none;
   border-bottom: none;
+}
+
+.overlay {
+  visibility: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: cyan;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
 }

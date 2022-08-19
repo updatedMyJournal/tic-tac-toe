@@ -12,13 +12,15 @@
 <body>
   <main>
     <div class="player-wrapper">
-      <div class="player1">
+      <div class="X-player selected">
         X <span class="score">0</span>
       </div>
-      <div class="player2">
+      <div class="O-player">
         O <span class="score">0</span>
       </div>
     </div> 
+
+    <div class="log">Select your player or start the game</div>
 
     <div class="gameboard">
       <div class="field" data-field-id="0"></div>
@@ -30,6 +32,9 @@
       <div class="field" data-field-id="6"></div>
       <div class="field" data-field-id="7"></div>
       <div class="field" data-field-id="8"></div>
+      <div class="overlay">
+        <div class="message"></div>
+      </div>
     </div>
   </main>
 </body>
