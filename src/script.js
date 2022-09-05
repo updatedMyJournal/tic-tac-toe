@@ -80,6 +80,7 @@ const gameFlow = new class {
     this.mainPlayer.toggleBacklight();
     displayController.hideOverlay();
     displayController.setOverlayMessage('');
+    displayController.setLogMessage('Select your player or start the game');
 
     this.mainPlayer = null;
     this.secondPlayer = null;
@@ -88,6 +89,7 @@ const gameFlow = new class {
   nextTurn() {
     if (displayController.isGameOver()) {
       displayController.showOverlay();
+      displayController.setLogMessage('Game over!');
 
       if (!this.winner) {
         displayController.setOverlayMessage(`It's a draw!`);
@@ -102,6 +104,7 @@ const gameFlow = new class {
 
     this.currentPlayer = this.currentPlayer === this.mainPlayer ? this.secondPlayer : this.mainPlayer;
     this.currentPlayer.toggleBacklight();
+    displayController.setLogMessage(`${this.currentPlayer.mark} Turn`);
   }
 
   onPlayerElemClick(e) {
@@ -133,6 +136,12 @@ const displayController = new class {
     } else {
       this.#OPlayerScore++;
     }
+  }
+
+  setLogMessage(str) {
+    let logElem = document.querySelector('.log');
+
+    logElem.textContent = str;
   }
 
   refreshPlayerScore(player) {
