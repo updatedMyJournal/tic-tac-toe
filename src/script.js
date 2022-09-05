@@ -92,6 +92,8 @@ const gameFlow = new class {
       if (!this.winner) {
         displayController.setOverlayMessage(`It's a draw!`);
       } else {
+        displayController.incrementPlayerScore(this.winner);
+        displayController.refreshPlayerScore(this.winner);
         displayController.setOverlayMessage(`The winner is: ${this.winner.mark}`);
       }
 
@@ -122,6 +124,23 @@ const gameFlow = new class {
 const displayController = new class {
   #overlayElem = document.querySelector('.overlay');
   #overlayMessageElem = this.#overlayElem.querySelector('.message');
+  #XPlayerScore = 0;
+  #OPlayerScore = 0;
+
+  incrementPlayerScore(player) {
+    if (player.mark === 'X') {
+      this.#XPlayerScore++;
+    } else {
+      this.#OPlayerScore++;
+    }
+  }
+
+  refreshPlayerScore(player) {
+    let mark = player.mark;
+    let playerScoreElem = document.querySelector(`.${mark}-player .score`);
+
+    playerScoreElem.textContent = mark === 'X' ? this.#XPlayerScore : this.#OPlayerScore;
+  }
 
   showOverlay() {
     this.#overlayElem.style.visibility = 'visible';
