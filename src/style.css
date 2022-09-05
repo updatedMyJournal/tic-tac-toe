@@ -32,6 +32,15 @@ main {
   margin: auto;
 }
 
+.restart {
+  width: 100%;
+  background-color: transparent;
+  border: none;
+  padding: 10px 0;
+  font-weight: bold;
+  cursor: pointer;
+}
+
 .player-wrapper {
   display: flex;
   gap: 100px;

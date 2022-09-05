@@ -46,7 +46,10 @@ const gameFlow = new class {
   isItFirstTurn = true;
 
   constructor() {
+    const restartButton = document.querySelector('.restart');
+
     this.#playerWrapperElem.onclick = this.onPlayerElemClick.bind(this);
+    restartButton.onclick = this.onRestart.bind(this);
   }
 
   selectMainPlayer(mark) {
@@ -110,13 +113,19 @@ const gameFlow = new class {
   onPlayerElemClick(e) {
     let clickedPlayerElem = e.target.closest('.X-player, .O-player');
 
-    if (!clickedPlayerElem) return;
+    if (!clickedPlayerElem || clickedPlayerElem === this.mainPlayer) return;
     
     const mark = this.#getMarkFromElem(clickedPlayerElem);
 
     this.selectMainPlayer(mark);
     this.#mainPlayerElem = clickedPlayerElem;
     this.mainPlayer.toggleBacklight();
+  }
+
+  onRestart() {
+    if (this.isItFirstTurn) return;
+    
+    this.finishGame();
   }
 
   #getMarkFromElem(elem) {
