@@ -41,6 +41,11 @@ main {
   cursor: pointer;
 }
 
+.select-wrapper {
+  width: 300px;
+  padding-bottom: 30px;
+}
+
 .player-wrapper {
   display: flex;
   gap: 100px;
