@@ -1,24 +1,25 @@
 const gameBoard = new class {
-  #boardElem = document.querySelector('.gameboard');
+  boardElem = document.querySelector('.gameboard');
 
   constructor() {
     this.board = new Array(9);
-
-    this.#boardElem.onclick = (e) => {
-      const field = e.target.closest('.field');
-    
-      if (!field) return;
-    
-      if (gameFlow.isItFirstTurn) gameFlow.startGame();
-    
-      if (!displayController.isMarkAllowed(field)) return;
-    
-      this.#setMark(field.dataset.fieldId);
-      setTimeout(() => gameFlow.nextTurn());
-    };
+    this.boardElem.onclick = this.onclickBoardHandler.bind(this);
   }
 
-  #setMark(index) {
+  onclickBoardHandler(e) {
+    const field = e.target.closest('.field');
+    
+    if (!field) return;
+  
+    if (gameFlow.isItFirstTurn) gameFlow.startGame();
+  
+    if (!displayController.isMarkAllowed(field)) return;
+    
+    this.setMark(field.dataset.fieldId);
+    setTimeout(() => gameFlow.nextTurn());
+  }
+
+  setMark(index) {
     const mark = gameFlow.currentPlayer.mark;
 
     this.board[index] = mark;
@@ -26,7 +27,7 @@ const gameBoard = new class {
   }
 
   reset() {
-    for (let field of this.#boardElem.querySelectorAll('.field')) {
+    for (let field of this.boardElem.querySelectorAll('.field')) {
       field.textContent = '';
     }
 
@@ -36,30 +37,46 @@ const gameBoard = new class {
 
 const gameFlow = new class {
   #playerWrapperElem = document.querySelector('.player-wrapper');
-  #mainPlayerElem = document.querySelector('.selectedByPlayer');
+  #mainPlayerElem = document.querySelector('.X-player');
+  #opponentPickerElem = document.querySelector('select');
 
+  // a human player
   mainPlayer;
-  secondPlayer;
+  // AI or another human player
+  opponent;
   currentPlayer;
   winner;
 
   isItFirstTurn = true;
+  aiTimer;
 
   constructor() {
     const restartButton = document.querySelector('.restart');
 
+    // TODO: reset score counter on change between a human and AI
+    this.#opponentPickerElem.onchange = () => {
+      if (this.#opponentPickerElem.value === 'human') {
+        displayController.setLogMessage('X Turn');
+        this.#playerWrapperElem.onclick = null;
+      } else {
+        displayController.setLogMessage('Select your player or start the game');
+      }
+      
+      this.restart();
+    };
+
     this.#playerWrapperElem.onclick = this.onPlayerElemClick.bind(this);
-    restartButton.onclick = this.onRestart.bind(this);
+    restartButton.onclick = this.restart.bind(this);
   }
 
   selectMainPlayer(mark) {
     this.mainPlayer = new Player(mark);
     this.currentPlayer = this.mainPlayer;
-    this.#selectSecondPlayer();
+    this.#selectOpponent();
   }
 
-  #selectSecondPlayer() {
-    this.secondPlayer = this.mainPlayer.mark === 'X' ? new Player('O') : new Player('X');
+  #selectOpponent() {
+    this.opponent = this.mainPlayer.mark === 'X' ? new Player('O') : new Player('X');
   }
 
   startGame() {
@@ -69,31 +86,53 @@ const gameFlow = new class {
       this.selectMainPlayer(mark);
     }
 
-    this.currentPlayer = this.mainPlayer;
+    // if AI is 'X', AI starts the game
+    if (this.#opponentPickerElem.value === 'ai' && this.opponent.mark === 'X') {
+      gameBoard.boardElem.onclick = null;
+      this.currentPlayer = this.opponent;
+
+      this.aiTimer = setTimeout(() => {
+        gameBoard.setMark(this.opponent.getBestAIMoveIndex());
+        this.nextTurn();
+      }, 1000);
+    } else {
+      this.currentPlayer = this.mainPlayer;
+    }
+
     this.#playerWrapperElem.onclick = null;
     this.isItFirstTurn = false;
   }
 
   finishGame() {
     gameBoard.reset();
-    this.winner = null;
-    this.#playerWrapperElem.onclick = this.onPlayerElemClick.bind(this);
-    this.isItFirstTurn = true;
+    gameBoard.boardElem.onclick = gameBoard.onclickBoardHandler.bind(gameBoard);
 
-    this.mainPlayer.toggleBacklight();
+    this.#mainPlayerElem = document.querySelector('.X-player');
+    this.winner = null;
+    this.isItFirstTurn = true;
+    this.aiTimer = null;
+    
     displayController.hideOverlay();
     displayController.setOverlayMessage('');
-    displayController.setLogMessage('Select your player or start the game');
+    displayController.setDefaultBacklight();
 
+    if (this.#opponentPickerElem.value === 'human') {
+      displayController.setLogMessage('X Turn');
+    } else {
+      this.#playerWrapperElem.onclick = this.onPlayerElemClick.bind(this);
+      displayController.setLogMessage('Select your player or start the game');
+    }
+    
     this.mainPlayer = null;
-    this.secondPlayer = null;
+    this.opponent = null;
   }
 
   nextTurn() {
-    if (displayController.isGameOver()) {
+    if (this.isGameOver()) {
+      this.#assignWinner();
       displayController.showOverlay();
       displayController.setLogMessage('Game over!');
-
+      
       if (!this.winner) {
         displayController.setOverlayMessage(`It's a draw!`);
       } else {
@@ -105,9 +144,19 @@ const gameFlow = new class {
       return;
     }
 
-    this.currentPlayer = this.currentPlayer === this.mainPlayer ? this.secondPlayer : this.mainPlayer;
+    gameBoard.boardElem.onclick = gameBoard.onclickBoardHandler.bind(gameBoard);
+    this.currentPlayer = this.currentPlayer === this.mainPlayer ? this.opponent : this.mainPlayer;
     this.currentPlayer.toggleBacklight();
     displayController.setLogMessage(`${this.currentPlayer.mark} Turn`);
+
+    if (this.#opponentPickerElem.value === 'ai' && this.currentPlayer === this.opponent) {
+      gameBoard.boardElem.onclick = null;
+
+      this.aiTimer = setTimeout(() => {
+        gameBoard.setMark(this.opponent.getBestAIMoveIndex());
+        this.nextTurn();
+      }, 1000);
+    }
   }
 
   onPlayerElemClick(e) {
@@ -119,17 +168,91 @@ const gameFlow = new class {
 
     this.selectMainPlayer(mark);
     this.#mainPlayerElem = clickedPlayerElem;
+    // TODO: fix later
     this.mainPlayer.toggleBacklight();
+    
+    if (this.#opponentPickerElem.value === 'ai' && this.opponent.mark === 'X') {
+      this.startGame();
+    }
+
   }
 
-  onRestart() {
-    if (this.isItFirstTurn) return;
-    
+  restart() {
+    clearTimeout(this.aiTimer);
     this.finishGame();
   }
 
   #getMarkFromElem(elem) {
     return elem.className.includes('X') ? 'X' : 'O';
+  }
+
+  isGameOver() {
+    const board = gameBoard.board;
+    let totalCounter = 0;
+
+    for (let i = 0, h = 0, v = 0; i < 9; i++, h += 3, v++) {
+      if (board[i]) totalCounter++;
+      
+      // rows
+      if (
+        h <= 6
+        && board[h] 
+        && board[h] === board[h + 1] 
+        && board[h + 1] === board[h + 2]
+      ) {
+        if (board[h] === this.mainPlayer.mark || board[h] === this.opponent.mark) {
+          return true;
+        }
+      }
+      
+      // columns
+      if (
+        v <= 2
+        && board[v] 
+        && board[v] === board[v + 3] 
+        && board[v + 3] === board[v + 6]
+      ) {
+        if (board[v] === this.mainPlayer.mark || board[v] === this.opponent.mark) {
+          return true;
+        }
+      }
+    }
+
+    // diagonals
+    if (
+      board[0] 
+      && board[0] === board[4]
+      && board[4] === board[8]
+    ) {
+      if (board[0] === this.mainPlayer.mark || board[0] === this.opponent.mark) {
+        return true;
+      }
+    }
+
+    if (
+      board[2] 
+      && board[2] === board[4]
+      && board[4] === board[6]
+    ) {
+      if (board[2] === this.mainPlayer.mark || board[2] === this.opponent.mark) {
+        return true;
+      }
+    }
+
+    // draw
+    if (totalCounter >= 9) return true;
+
+    return false;
+  }
+
+  #assignWinner() {
+    let score = Player.evaluateCurrentStateAsAI(gameBoard.board);
+
+    if (score > 0) {
+      this.winner = this.opponent;
+    } else if (score < 0) {
+      this.winner = this.mainPlayer;
+    }
   }
 }
 
@@ -178,102 +301,12 @@ const displayController = new class {
     return elem.textContent === '';
   }
 
-  isGameOver() {
-    let totalCounter = 0;
-    let p1DiagonalCounter = 0;
-    let p2DiagonalCounter = 0;
-    
-    for (let i = 0, k = 0; i < 3; i++) {
-      let p1RowCounter = 0;
-      let p1ColumnCounter = 0;
-      let p2RowCounter = 0;
-      let p2ColumnCounter = 0;
+  setDefaultBacklight() {
+    const xPlayerElem = document.querySelector('.X-player');
+    const oPlayerElem = document.querySelector('.O-player');
 
-      //rows
-      for (let j = 0; j < 3; j++, k++) {
-        if (gameBoard.board[k]) totalCounter++;
-
-        if (gameBoard.board[k] == gameFlow.mainPlayer.mark) {
-          p1RowCounter++;
-        } else if (gameBoard.board[k] == gameFlow.secondPlayer.mark) {
-          p2RowCounter++;
-        }
-      }
-
-      if (p1RowCounter >= 3) {
-        gameFlow.winner = gameFlow.mainPlayer;
-
-        return true;
-      } else if (p2RowCounter >= 3) {
-        gameFlow.winner = gameFlow.secondPlayer;
-
-        return true;
-      }
-
-      //columns
-      for (let j = i; j < 9; j += 3) {
-        if (gameBoard.board[j] == gameFlow.mainPlayer.mark) {
-          p1ColumnCounter++;
-        } else if (gameBoard.board[j] == gameFlow.secondPlayer.mark) {
-          p2ColumnCounter++;
-        }
-      }
-
-      if (p1ColumnCounter >= 3) {
-        gameFlow.winner = gameFlow.mainPlayer;
-
-        return true;
-      } else if (p2ColumnCounter >= 3) {
-        gameFlow.winner = gameFlow.secondPlayer;
-
-        return true;
-      }
-    }
-
-    // diagonals
-    for (let j = 0; j < 9; j += 4) {
-      if (gameBoard.board[j] == gameFlow.mainPlayer.mark) {
-        p1DiagonalCounter++;
-      } else if (gameBoard.board[j] == gameFlow.secondPlayer.mark) {
-        p2DiagonalCounter++;
-      }
-
-      if (p1DiagonalCounter >= 3) {
-        gameFlow.winner = gameFlow.mainPlayer;
-
-        return true;
-      } else if (p2DiagonalCounter >= 3) {
-        gameFlow.winner = gameFlow.secondPlayer
-
-        return true;
-      }
-    }
-
-    p1DiagonalCounter = 0;
-    p2DiagonalCounter = 0;
-
-    for (let j = 2; j <= 6; j += 2) {
-      if (gameBoard.board[j] == gameFlow.mainPlayer.mark) {
-        p1DiagonalCounter++;
-      } else if (gameBoard.board[j] == gameFlow.secondPlayer.mark) {
-        p2DiagonalCounter++;
-      }
-
-      if (p1DiagonalCounter >= 3) {
-        gameFlow.winner = gameFlow.mainPlayer;
-
-        return true;
-      } else if (p2DiagonalCounter >= 3) {
-        gameFlow.winner = gameFlow.secondPlayer;
-
-        return true;
-      }
-    }
-
-    // a draw
-    if (totalCounter >= 9) return true;
-
-    return false;
+    xPlayerElem.classList.add('backlight');
+    oPlayerElem.classList.remove('backlight');
   }
 }
 
@@ -285,6 +318,145 @@ class Player {
     this.mark = mark;
   }
 
+  getBestAIMoveIndex() {
+    const board = gameBoard.board;
+    let bestScore = -10;
+    let index;
+
+    for (let i = 0; i < board.length; i++) {
+      if (board[i] !== undefined) continue;
+
+      let score;
+
+      board[i] = gameFlow.opponent.mark;
+
+      /**
+       * Why false? We set our mark on every available field in turn
+       * and look out for the worst move of our adversary (human player in this case).
+       * In other words: we are maximizer here.
+       */
+      score = this.#minimax(board, 0, false);
+      board[i] = undefined;
+
+      if (score > bestScore) {
+        bestScore = score;
+        index = i;
+      }
+    }
+
+    return index;
+  }
+
+  #minimax(board, depth, isMax) {
+    if (gameFlow.isGameOver()) {
+      const score = Player.evaluateCurrentStateAsAI(board);
+
+      /**
+       * depth is for finding the shortest way
+       * the bigger the depth the worse result
+       */
+      if (score === 10) {
+        return score - depth;
+      } else if (score === -10) {
+        return score + depth;
+      } else {
+        return score;
+      }
+    }
+
+    let bestValue;
+
+    // maximizer
+    if (isMax) {
+      bestValue = -10;
+
+      for (let i = 0; i < board.length; i++) {
+        if (board[i] !== undefined) continue;
+
+        board[i] = gameFlow.opponent.mark;
+        bestValue = Math.max(bestValue, this.#minimax(board, depth + 1, false));
+        board[i] = undefined;
+      }
+
+      return bestValue;
+    } 
+      // minimizer
+      else {
+      bestValue = 10;
+
+      for (let i = 0; i < board.length; i++) {
+        if (board[i] !== undefined) continue;
+
+        board[i] = gameFlow.mainPlayer.mark;
+        bestValue = Math.min(bestValue, this.#minimax(board, depth + 1, true));
+        board[i] = undefined;
+      }
+
+      return bestValue;
+    }
+  }
+
+  static evaluateCurrentStateAsAI(board) {
+    const opponentMark = gameFlow.opponent.mark;
+
+    for (let i = 0, h = 0, v = 0; i < 3; i++, h += 3, v++) {
+      
+      // rows
+      if (
+        board[h] 
+        && board[h] === board[h + 1] 
+        && board[h + 1] === board[h + 2]
+      ) {
+        if (board[h] === opponentMark) {
+          return 10;
+        } else {
+          return -10;
+        }
+      }
+      
+      // columns
+      if (
+        board[v] 
+        && board[v] === board[v + 3] 
+        && board[v + 3] === board[v + 6]
+      ) {
+        if (board[v] === opponentMark) {
+          return 10;
+        } else {
+          return -10;
+        }
+      }
+    }
+
+    // diagonals
+    if (
+      board[0] 
+      && board[0] === board[4]
+      && board[4] === board[8]
+    ) {
+      if (board[0] === opponentMark) {
+        return 10;
+      } else {
+        return -10;
+      }
+    }
+
+    if (
+      board[2] 
+      && board[2] === board[4]
+      && board[4] === board[6]
+    ) {
+      if (board[2] === opponentMark) {
+        return 10;
+      } else {
+        return -10;
+      }
+    }
+
+    return 0;
+  }
+
+  // TODO: change later
   toggleBacklight() {
     this.#xPlayerElem.classList.remove('backlight');
     this.#oPlayerElem.classList.remove('backlight');
