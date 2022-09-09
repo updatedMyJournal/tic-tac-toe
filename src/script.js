@@ -59,6 +59,7 @@ const gameFlow = new class {
         displayController.setLogMessage('X Turn');
         this.#playerWrapperElem.onclick = null;
       } else {
+        aiLogic.setAIDifficulty();
         displayController.setLogMessage('Select your player or start the game');
       }
       
@@ -88,11 +89,12 @@ const gameFlow = new class {
 
     // if AI is 'X', AI starts the game
     if (this.#opponentPickerElem.value === 'ai' && this.opponent.mark === 'X') {
+      aiLogic.setAIDifficulty();
       gameBoard.boardElem.onclick = null;
       this.currentPlayer = this.opponent;
 
       this.aiTimer = setTimeout(() => {
-        gameBoard.setMark(this.opponent.getBestAIMoveIndex());
+        gameBoard.setMark(aiLogic.getBestAIMoveIndex());
         this.nextTurn();
       }, 1000);
     } else {
@@ -153,7 +155,7 @@ const gameFlow = new class {
       gameBoard.boardElem.onclick = null;
 
       this.aiTimer = setTimeout(() => {
-        gameBoard.setMark(this.opponent.getBestAIMoveIndex());
+        gameBoard.setMark(aiLogic.getBestAIMoveIndex());
         this.nextTurn();
       }, 1000);
     }
@@ -246,7 +248,7 @@ const gameFlow = new class {
   }
 
   #assignWinner() {
-    let score = Player.evaluateCurrentStateAsAI(gameBoard.board);
+    let score = aiLogic.evaluateCurrentStateAsAI(gameBoard.board);
 
     if (score > 0) {
       this.winner = this.opponent;
@@ -310,18 +312,42 @@ const displayController = new class {
   }
 }
 
-class Player {
-  #xPlayerElem = document.querySelector('.X-player');
-  #oPlayerElem = document.querySelector('.O-player');
+const aiLogic = new class {
+  #maxDepth = 2;
+  #skill = 50;
 
-  constructor(mark) {
-    this.mark = mark;
+  setAIDifficulty() {
+    const select = document.querySelector('select');
+    const index = select.selectedIndex;
+    const difficulty = select.options[index].dataset.difficulty;
+
+    switch(difficulty) {
+      case 'easy':
+        this.#maxDepth = 1;
+        this.#skill = 15;
+        break;
+      case 'medium':
+        this.#maxDepth = 2;
+        this.#skill = 40;
+        break;
+      case 'impossible':
+        this.#maxDepth = 100;
+        this.#skill = 100;
+        break;
+    }
   }
 
   getBestAIMoveIndex() {
     const board = gameBoard.board;
     let bestScore = -10;
     let index;
+
+    // AI has the chance of making a random move on easier difficulties.
+    if (!this.#isAISkilledEnoughForOptimalMove()) {
+      index = this.#getRandomAvailableIndex();
+
+      return index;
+    }
 
     for (let i = 0; i < board.length; i++) {
       if (board[i] !== undefined) continue;
@@ -348,8 +374,8 @@ class Player {
   }
 
   #minimax(board, depth, isMax) {
-    if (gameFlow.isGameOver()) {
-      const score = Player.evaluateCurrentStateAsAI(board);
+    if (depth >= this.#maxDepth || gameFlow.isGameOver()) {
+      const score = this.evaluateCurrentStateAsAI(board);
 
       /**
        * depth is for finding the shortest way
@@ -396,7 +422,7 @@ class Player {
     }
   }
 
-  static evaluateCurrentStateAsAI(board) {
+  evaluateCurrentStateAsAI(board) {
     const opponentMark = gameFlow.opponent.mark;
 
     for (let i = 0, h = 0, v = 0; i < 3; i++, h += 3, v++) {
@@ -454,6 +480,35 @@ class Player {
     }
 
     return 0;
+  }
+
+  #isAISkilledEnoughForOptimalMove() {
+    const random = Math.floor(Math.random() * 100) + 1;
+
+    return random <= this.#skill;
+  }
+
+  #getRandomAvailableIndex() {
+    let index;
+
+    while(true) {
+      index = Math.floor(Math.random() * 9);
+
+      const field = document.querySelector(`.field[data-field-id="${index}"]`);
+
+      if (displayController.isMarkAllowed(field)) break;
+    }
+
+    return index;
+  }
+}
+
+class Player {
+  #xPlayerElem = document.querySelector('.X-player');
+  #oPlayerElem = document.querySelector('.O-player');
+
+  constructor(mark) {
+    this.mark = mark;
   }
 
   // TODO: change later
