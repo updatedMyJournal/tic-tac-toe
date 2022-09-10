@@ -40,27 +40,34 @@ const gameFlow = new class {
   #mainPlayerElem = document.querySelector('.X-player');
   #opponentPickerElem = document.querySelector('select');
 
-  // a human player
   mainPlayer;
-  // AI or another human player
   opponent;
   currentPlayer;
   winner;
 
   isItFirstTurn = true;
   aiTimer;
+  isPrevSelectedOpponentHuman = false;
 
   constructor() {
     const restartButton = document.querySelector('.restart');
 
-    // TODO: reset score counter on change between a human and AI
     this.#opponentPickerElem.onchange = () => {
       if (this.#opponentPickerElem.value === 'human') {
-        displayController.setLogMessage('X Turn');
         this.#playerWrapperElem.onclick = null;
+        this.isPrevSelectedOpponentHuman = true;
+
+        displayController.setLogMessage('X Turn');
+        displayController.resetPlayerScores();
       } else {
         aiLogic.setAIDifficulty();
         displayController.setLogMessage('Select your player or start the game');
+
+        if (this.isPrevSelectedOpponentHuman) {
+          displayController.resetPlayerScores();
+        }
+
+        this.isPrevSelectedOpponentHuman = false;
       }
       
       this.restart();
@@ -283,6 +290,16 @@ const displayController = new class {
     let playerScoreElem = document.querySelector(`.${mark}-player .score`);
 
     playerScoreElem.textContent = mark === 'X' ? this.#XPlayerScore : this.#OPlayerScore;
+  }
+
+  resetPlayerScores() {
+    const XPlayerScoreElem = document.querySelector(`.X-player .score`);
+    const OPlayerScoreElem = document.querySelector(`.O-player .score`);
+
+    XPlayerScoreElem.textContent = '0';
+    OPlayerScoreElem.textContent = '0';
+    this.#XPlayerScore = 0;
+    this.#OPlayerScore = 0;
   }
 
   showOverlay() {
