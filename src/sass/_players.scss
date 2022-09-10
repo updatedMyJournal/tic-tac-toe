@@ -1,11 +1,25 @@
 .select-wrapper {
   width: 300px;
-  padding-bottom: 30px;
+  padding: 20px 20px 20px 0;
+}
+
+select {
+  background-color: transparent;
+  border: none;
+  border-bottom: 2px solid black;
+  cursor: pointer;
+  font-style: oblique;
+}
+
+select:focus {
+  outline: none;
 }
 
 .player-wrapper {
   display: flex;
-  gap: 100px;
+  justify-content: space-between;
+
+  width: 300px;
   font-size: var(--player-font-size);
 }
 
@@ -14,25 +28,31 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  vertical-align: middle;
 
-  width: 100px;
+  width: 125px;
   height: 30px;
-  padding: 10px;
+  padding: 10px 20px;
   border: 1px solid lightgray;
-  border-radius: 10px;
+  border-radius: 6px;
   cursor: pointer;
 }
 
 .X-player.backlight {
-  box-shadow: 0 3px 1px cyan;
+  box-shadow: 0 3px 1px rgb(var(--x-player-color));
 }
 
 .O-player.backlight {
-  box-shadow: 0 3px 1px lightcoral;
+  box-shadow: 0 3px 1px rgb(var(--o-player-color));
 }
 
 .log {
   margin: 30px 0;
   font-size: var(--scale1);
+}
+
+@media screen and (min-width: 340px) {
+  .select-wrapper {
+    align-self: flex-start;
+    padding-left: 20px;
+  }
 }

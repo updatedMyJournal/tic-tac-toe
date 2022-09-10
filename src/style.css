@@ -1,8 +1,11 @@
 :root {
   --bg-color: 237, 237, 237;
+  --x-player-color: 63, 81, 181;
+  --o-player-color: 228, 38, 206;
+  --border-color: 216, 210, 210;
   --player-font-size: calc(1.5 * var(--scale0));
-  --gameboard-font-size: 80px;
-  --interval: 1.1;
+  --gameboard-font-size: calc(var(--scale0) * 5.5);
+  --interval: 1.2;
   --scale0: 1rem;
   --scale1: calc(var(--scale0) * var(--interval));
 }
@@ -10,14 +13,11 @@
 html {
   box-sizing: border-box;
   font-size: 100%;
+  font-family: "Comic Neue", cursive;
 }
 
 *, *::before, *::after {
   box-sizing: inherit;
-}
-
-body {
-  background-color: rgb(var(--bg-color));
 }
 
 main {
@@ -27,28 +27,47 @@ main {
   min-width: -webkit-fit-content;
   min-width: -moz-fit-content;
   min-width: fit-content;
-  max-width: 1300px;
-  padding: 30px 5px;
-  margin: auto;
+  max-width: 800px;
+  margin: 30px auto;
 }
 
 .restart {
   width: 100%;
   background-color: transparent;
   border: none;
-  padding: 10px 0;
+  padding: 20px 0;
+  font-size: 1.3rem;
   font-weight: bold;
   cursor: pointer;
 }
 
+@media screen and (min-width: 800px) {
+  main {
+    border: 1px solid rgb(var(--border-color));
+    border-radius: 10px;
+  }
+}
 .select-wrapper {
   width: 300px;
-  padding-bottom: 30px;
+  padding: 20px 20px 20px 0;
+}
+
+select {
+  background-color: transparent;
+  border: none;
+  border-bottom: 2px solid black;
+  cursor: pointer;
+  font-style: oblique;
+}
+
+select:focus {
+  outline: none;
 }
 
 .player-wrapper {
   display: flex;
-  gap: 100px;
+  justify-content: space-between;
+  width: 300px;
   font-size: var(--player-font-size);
 }
 
@@ -57,21 +76,20 @@ main {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  vertical-align: middle;
-  width: 100px;
+  width: 125px;
   height: 30px;
-  padding: 10px;
+  padding: 10px 20px;
   border: 1px solid lightgray;
-  border-radius: 10px;
+  border-radius: 6px;
   cursor: pointer;
 }
 
 .X-player.backlight {
-  box-shadow: 0 3px 1px cyan;
+  box-shadow: 0 3px 1px rgb(var(--x-player-color));
 }
 
 .O-player.backlight {
-  box-shadow: 0 3px 1px lightcoral;
+  box-shadow: 0 3px 1px rgb(var(--o-player-color));
 }
 
 .log {
@@ -79,11 +97,28 @@ main {
   font-size: var(--scale1);
 }
 
+@media screen and (min-width: 340px) {
+  .select-wrapper {
+    align-self: flex-start;
+    padding-left: 20px;
+  }
+}
+.gameboard-wrapper {
+  position: relative;
+  width: 100%;
+  border-top: 1px solid rgb(var(--border-color));
+  border-bottom: 1px solid rgb(var(--border-color));
+}
+
 .gameboard {
   display: grid;
   grid-template-rows: repeat(3, 100px);
   grid-template-columns: repeat(3, 100px);
-  position: relative;
+  width: -webkit-fit-content;
+  width: -moz-fit-content;
+  width: fit-content;
+  margin: auto;
+  padding: 10px;
 }
 
 .field {
@@ -91,7 +126,7 @@ main {
   justify-content: center;
   align-items: center;
   font-size: var(--gameboard-font-size);
-  border: 2px solid black;
+  border: 2px solid rgb(var(--border-color));
 }
 
 .field:first-child {
@@ -133,12 +168,36 @@ main {
 .overlay {
   visibility: hidden;
   display: flex;
+  flex-flow: column nowrap;
   justify-content: center;
   align-items: center;
-  background-color: cyan;
   position: absolute;
   left: 0;
   right: 0;
   top: 0;
   bottom: 0;
+  font-size: calc(var(--scale0) * 4);
+  cursor: pointer;
 }
+.overlay .winner {
+  font-size: var(--gameboard-font-size);
+  font-weight: bold;
+}
+.overlay.X-win {
+  background-color: rgba(var(--x-player-color), 0.2);
+}
+.overlay.X-win .winner {
+  color: rgb(var(--x-player-color));
+}
+.overlay.O-win {
+  background-color: rgba(var(--o-player-color), 0.2);
+}
+.overlay.O-win .winner {
+  color: rgb(var(--o-player-color));
+}
+.overlay.draw {
+  background-color: rgba(var(--border-color), 0.5);
+}
+.overlay.draw .winner {
+  color: rgb(116, 85, 143);
+}/*# sourceMappingURL=style.css.map */

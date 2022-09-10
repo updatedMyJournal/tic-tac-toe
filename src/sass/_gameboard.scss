@@ -1,9 +1,18 @@
+.gameboard-wrapper {
+  position: relative;
+  width: 100%;
+  border-top: 1px solid rgb(var(--border-color));
+  border-bottom: 1px solid rgb(var(--border-color));
+}
+
 .gameboard {
   display: grid;
   grid-template-rows: repeat(3, 100px);
   grid-template-columns: repeat(3, 100px);
 
-  position: relative;
+  width: fit-content;
+  margin: auto;
+  padding: 10px;
 }
 
 .field {
@@ -12,8 +21,7 @@
   align-items: center;
 
   font-size: var(--gameboard-font-size);
-
-  border: 2px solid black;
+  border: 2px solid rgb(var(--border-color));
 }
 
 .field:first-child {
@@ -55,13 +63,45 @@
 .overlay {
   visibility: hidden;
   display: flex;
+  flex-flow: column nowrap;
   justify-content: center;
   align-items: center;
-  background-color: cyan;
-
+  
   position: absolute;
   left: 0;
   right: 0;
   top: 0;
   bottom: 0;
+
+  font-size: calc(var(--scale0) * 4);
+  cursor: pointer;
+
+  .winner {
+    font-size: var(--gameboard-font-size);
+    font-weight: bold;
+  }
+
+  &.X-win {
+    background-color: rgba(var(--x-player-color), 0.2);
+
+    .winner {
+      color: rgb(var(--x-player-color));
+    }
+  }
+
+  &.O-win {
+    background-color: rgba(var(--o-player-color), 0.2);
+
+    .winner {
+      color: rgb(var(--o-player-color));
+    }
+  }
+
+  &.draw {
+    background-color: rgba(var(--border-color), 0.5);
+
+    .winner {
+      color: rgb(116, 85, 143);
+    }
+  }
 }

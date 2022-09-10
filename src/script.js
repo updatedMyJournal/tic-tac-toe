@@ -21,17 +21,29 @@ const gameBoard = new class {
 
   setMark(index) {
     const mark = gameFlow.currentPlayer.mark;
+    const field = document.querySelector(`.field[data-field-id="${index}"]`);
+
+    this.colorizeFieldText(field);
 
     this.board[index] = mark;
-    document.querySelector(`.field[data-field-id="${index}"]`).textContent = mark;
+    field.textContent = mark;
+  }
+
+  colorizeFieldText(elem) {
+    const mark = gameFlow.currentPlayer.mark.toLowerCase();
+
+    elem.style.color = `rgb(var(--${mark}-player-color))`;
   }
 
   reset() {
     for (let field of this.boardElem.querySelectorAll('.field')) {
       field.textContent = '';
+      field.style.color = '';
     }
 
     this.board = new Array(9);
+    this.boardElem.style.visibility = '';
+    this.boardElem.onclick = this.onclickBoardHandler.bind(this);
   }
 }
 
@@ -114,7 +126,6 @@ const gameFlow = new class {
 
   finishGame() {
     gameBoard.reset();
-    gameBoard.boardElem.onclick = gameBoard.onclickBoardHandler.bind(gameBoard);
 
     this.#mainPlayerElem = document.querySelector('.X-player');
     this.winner = null;
@@ -122,7 +133,6 @@ const gameFlow = new class {
     this.aiTimer = null;
     
     displayController.hideOverlay();
-    displayController.setOverlayMessage('');
     displayController.setDefaultBacklight();
 
     if (this.#opponentPickerElem.value === 'human') {
@@ -139,15 +149,17 @@ const gameFlow = new class {
   nextTurn() {
     if (this.isGameOver()) {
       this.#assignWinner();
+      
+      displayController.hideGameboard();
       displayController.showOverlay();
       displayController.setLogMessage('Game over!');
       
       if (!this.winner) {
-        displayController.setOverlayMessage(`It's a draw!`);
+        displayController.setOverlayMessage('draw');
       } else {
         displayController.incrementPlayerScore(this.winner);
         displayController.refreshPlayerScore(this.winner);
-        displayController.setOverlayMessage(`The winner is: ${this.winner.mark}`);
+        displayController.setOverlayMessage(this.winner.mark);
       }
 
       return;
@@ -177,7 +189,6 @@ const gameFlow = new class {
 
     this.selectMainPlayer(mark);
     this.#mainPlayerElem = clickedPlayerElem;
-    // TODO: fix later
     this.mainPlayer.toggleBacklight();
     
     if (this.#opponentPickerElem.value === 'ai' && this.opponent.mark === 'X') {
@@ -267,7 +278,6 @@ const gameFlow = new class {
 
 const displayController = new class {
   #overlayElem = document.querySelector('.overlay');
-  #overlayMessageElem = this.#overlayElem.querySelector('.message');
   #XPlayerScore = 0;
   #OPlayerScore = 0;
 
@@ -296,8 +306,8 @@ const displayController = new class {
     const XPlayerScoreElem = document.querySelector(`.X-player .score`);
     const OPlayerScoreElem = document.querySelector(`.O-player .score`);
 
-    XPlayerScoreElem.textContent = '0';
-    OPlayerScoreElem.textContent = '0';
+    XPlayerScoreElem.textContent = '-';
+    OPlayerScoreElem.textContent = '-';
     this.#XPlayerScore = 0;
     this.#OPlayerScore = 0;
   }
@@ -308,12 +318,36 @@ const displayController = new class {
   }
 
   hideOverlay() {
+    this.#overlayElem.className = 'overlay';
     this.#overlayElem.style.visibility = '';
     this.#overlayElem.onclick = null;
   }
 
-  setOverlayMessage(str) {
-    this.#overlayMessageElem.textContent = str;
+  setOverlayMessage(str = '') {
+    const overlayWinnerElem = this.#overlayElem.querySelector('.winner');
+    const overlayTextElem = this.#overlayElem.querySelector('.text');
+
+    switch(str) {
+      case 'X':
+      case 'O':
+        overlayWinnerElem.textContent = str;
+        overlayTextElem.textContent = 'WINNER!';
+        this.#overlayElem.classList.add(`${str}-win`);
+        break;
+      case 'draw':
+        overlayWinnerElem.textContent = 'XO';
+        overlayTextElem.textContent = 'DRAW!';
+        this.#overlayElem.classList.add('draw');
+        break;
+      default:
+        overlayWinnerElem.textContent = '';
+        overlayTextElem.textContent = '';
+        break;
+    }
+  }
+
+  hideGameboard() {
+    gameBoard.boardElem.style.visibility = 'hidden';
   }
 
   isMarkAllowed(elem) {
@@ -528,7 +562,6 @@ class Player {
     this.mark = mark;
   }
 
-  // TODO: change later
   toggleBacklight() {
     this.#xPlayerElem.classList.remove('backlight');
     this.#oPlayerElem.classList.remove('backlight');

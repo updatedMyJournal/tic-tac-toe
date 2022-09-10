@@ -1,9 +1,12 @@
 :root {
   --bg-color: 237, 237, 237;
+  --x-player-color: 63, 81, 181;
+  --o-player-color: 228, 38, 206;
+  --border-color: 216, 210, 210;
   --player-font-size: calc(1.5 * var(--scale0));
-  --gameboard-font-size: 80px;
+  --gameboard-font-size: calc(var(--scale0) * 5.5);
 
-  --interval: 1.1;
+  --interval: 1.2;
   --scale0: 1rem;
   --scale1: calc(var(--scale0) * var(--interval));
 }
@@ -11,14 +14,11 @@
 html {
   box-sizing: border-box;
   font-size: 100%;
+  font-family: 'Comic Neue', cursive;
 }
 
 *, *::before, *::after {
   box-sizing: inherit;
-}
-
-body {
-  background-color: rgb(var(--bg-color));
 }
 
 main {
@@ -27,16 +27,23 @@ main {
   align-items: center;
 
   min-width: fit-content;
-  max-width: 1300px;
-  padding: 30px 5px;
-  margin: auto;
+  max-width: 800px;
+  margin: 30px auto;
 }
 
 .restart {
   width: 100%;
   background-color: transparent;
   border: none;
-  padding: 10px 0;
+  padding: 20px 0;
+  font-size: 1.3rem;
   font-weight: bold;
   cursor: pointer;
+}
+
+@media screen and (min-width: 800px) {
+  main {
+    border: 1px solid rgb(var(--border-color));
+    border-radius: 10px;
+  }
 }
