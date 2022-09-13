@@ -126,6 +126,7 @@ const gameFlow = new class {
 
   finishGame() {
     gameBoard.reset();
+    this.winner?.removeBacklight();
 
     this.#mainPlayerElem = document.querySelector('.X-player');
     this.winner = null;
@@ -156,6 +157,7 @@ const gameFlow = new class {
       
       if (!this.winner) {
         displayController.setOverlayMessage('draw');
+        this.mainPlayer.removeBacklight();
       } else {
         displayController.incrementPlayerScore(this.winner);
         displayController.refreshPlayerScore(this.winner);
@@ -193,9 +195,9 @@ const gameFlow = new class {
     
     if (this.#opponentPickerElem.value === 'ai' && this.opponent.mark === 'X') {
       displayController.setLogMessage('X Turn');
+      this.opponent.toggleBacklight();
       this.startGame();
     }
-
   }
 
   restart() {
@@ -562,16 +564,21 @@ const aiLogic = new class {
 }
 
 class Player {
-  #xPlayerElem = document.querySelector('.X-player');
-  #oPlayerElem = document.querySelector('.O-player');
-
   constructor(mark) {
     this.mark = mark;
   }
 
   toggleBacklight() {
-    this.#xPlayerElem.classList.remove('backlight');
-    this.#oPlayerElem.classList.remove('backlight');
+    gameFlow.mainPlayer.removeBacklight();
+    gameFlow.opponent.removeBacklight();
+    this.addBacklight();
+  }
+
+  addBacklight() {
     document.querySelector(`.${this.mark}-player`).classList.add('backlight');
+  }
+
+  removeBacklight() {
+    document.querySelector(`.${this.mark}-player`).classList.remove('backlight');
   }
 }
