@@ -412,7 +412,7 @@ const aiLogic = new class {
        * and look out for the worst move of our adversary (human player in this case).
        * In other words: we are maximizer here.
        */
-      score = this.#minimax(board, 0, false);
+      score = this.#minimax(board, 0, false, -100, 100);
       board[i] = undefined;
 
       if (score > bestScore) {
@@ -424,10 +424,10 @@ const aiLogic = new class {
     return index;
   }
 
-  #minimax(board, depth, isMax) {
+  #minimax(board, depth, isMax, alpha, beta) {
     if (depth >= this.#maxDepth || gameFlow.isGameOver()) {
       const score = this.evaluateCurrentStateAsAI(board);
-
+      
       /**
        * depth is for finding the shortest way
        * the bigger the depth the worse result
@@ -451,8 +451,11 @@ const aiLogic = new class {
         if (board[i] !== undefined) continue;
 
         board[i] = gameFlow.opponent.mark;
-        bestValue = Math.max(bestValue, this.#minimax(board, depth + 1, false));
+        bestValue = Math.max(bestValue, this.#minimax(board, depth + 1, false, alpha, beta));
+        alpha = Math.max(alpha, bestValue);
         board[i] = undefined;
+
+        if (alpha >= beta) break;
       }
 
       return bestValue;
@@ -465,8 +468,11 @@ const aiLogic = new class {
         if (board[i] !== undefined) continue;
 
         board[i] = gameFlow.mainPlayer.mark;
-        bestValue = Math.min(bestValue, this.#minimax(board, depth + 1, true));
+        bestValue = Math.min(bestValue, this.#minimax(board, depth + 1, true, alpha, beta));
+        beta = Math.min(beta, bestValue);
         board[i] = undefined;
+
+        if (alpha >= beta) break;
       }
 
       return bestValue;
