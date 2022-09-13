@@ -192,6 +192,7 @@ const gameFlow = new class {
     this.mainPlayer.toggleBacklight();
     
     if (this.#opponentPickerElem.value === 'ai' && this.opponent.mark === 'X') {
+      displayController.setLogMessage('X Turn');
       this.startGame();
     }
 
@@ -427,7 +428,7 @@ const aiLogic = new class {
   #minimax(board, depth, isMax, alpha, beta) {
     if (depth >= this.#maxDepth || gameFlow.isGameOver()) {
       const score = this.evaluateCurrentStateAsAI(board);
-      
+
       /**
        * depth is for finding the shortest way
        * the bigger the depth the worse result
