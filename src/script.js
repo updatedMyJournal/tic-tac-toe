@@ -4,6 +4,7 @@ const gameBoard = new class {
   constructor() {
     this.board = new Array(9);
     this.boardElem.onclick = this.onclickBoardHandler.bind(this);
+    this.boardElem.onselectstart = () => false;
   }
 
   onclickBoardHandler(e) {

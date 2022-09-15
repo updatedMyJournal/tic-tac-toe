@@ -24,6 +24,8 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
+  min-width: -webkit-fit-content;
+  min-width: -moz-fit-content;
   min-width: fit-content;
   max-width: 800px;
   margin: 30px auto;
@@ -118,9 +120,12 @@ select:focus {
   grid-template-rows: repeat(3, 100px);
   grid-template-columns: repeat(3, 100px);
   position: relative;
+  width: -webkit-fit-content;
+  width: -moz-fit-content;
   width: fit-content;
   margin: auto;
   padding: 10px;
+  cursor: default;
 }
 
 .field {
@@ -212,45 +217,74 @@ select:focus {
 }
 
 .logAnimation {
-  animation-name: animateLog;
-  animation-duration: 0.3s;
-  animation-fill-mode: forwards;
+  -webkit-animation-name: animateLog;
+          animation-name: animateLog;
+  -webkit-animation-duration: 0.3s;
+          animation-duration: 0.3s;
+  -webkit-animation-fill-mode: forwards;
+          animation-fill-mode: forwards;
 }
 
 .boardAnimation {
-  animation-name: animateBoard;
-  animation-duration: 0.3s;
-  animation-fill-mode: forwards;
+  -webkit-animation-name: animateBoard;
+          animation-name: animateBoard;
+  -webkit-animation-duration: 0.3s;
+          animation-duration: 0.3s;
+  -webkit-animation-fill-mode: forwards;
+          animation-fill-mode: forwards;
 }
 
 .boardAnimationEndgame {
-  animation-name: animateBoardEndgame;
-  animation-duration: 1.8s;
+  -webkit-animation-name: animateBoardEndgame;
+          animation-name: animateBoardEndgame;
+  -webkit-animation-duration: 1.8s;
+          animation-duration: 1.8s;
 }
 
 .overlayAnimationShow {
-  animation-name: animateOverlayShow;
-  animation-duration: 0.4s;
-  animation-fill-mode: forwards;
+  -webkit-animation-name: animateOverlayShow;
+          animation-name: animateOverlayShow;
+  -webkit-animation-duration: 0.4s;
+          animation-duration: 0.4s;
+  -webkit-animation-fill-mode: forwards;
+          animation-fill-mode: forwards;
 }
 
 .overlayAnimationHide {
-  animation-name: animateOverlayHide;
-  animation-duration: 0.2s;
+  -webkit-animation-name: animateOverlayHide;
+          animation-name: animateOverlayHide;
+  -webkit-animation-duration: 0.2s;
+          animation-duration: 0.2s;
 }
 
 .letterAnimation {
-  animation-name: animateLetter;
-  animation-duration: 0.3s;
-  animation-fill-mode: forwards;
+  -webkit-animation-name: animateLetter;
+          animation-name: animateLetter;
+  -webkit-animation-duration: 0.3s;
+          animation-duration: 0.3s;
+  -webkit-animation-fill-mode: forwards;
+          animation-fill-mode: forwards;
   transform-origin: top;
 }
 
 .lineAnimation {
-  animation-name: animateLine;
-  animation-duration: 0.5s;
-  animation-delay: 0.7s;
-  animation-fill-mode: forwards;
+  -webkit-animation-name: animateLine;
+          animation-name: animateLine;
+  -webkit-animation-duration: 0.5s;
+          animation-duration: 0.5s;
+  -webkit-animation-delay: 0.7s;
+          animation-delay: 0.7s;
+  -webkit-animation-fill-mode: forwards;
+          animation-fill-mode: forwards;
+}
+
+@-webkit-keyframes animateLog {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes animateLog {
@@ -261,11 +295,29 @@ select:focus {
     opacity: 1;
   }
 }
+@-webkit-keyframes animateLetter {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
 @keyframes animateLetter {
   from {
     transform: scale(0);
   }
   to {
+    transform: scale(1);
+  }
+}
+@-webkit-keyframes animateBoard {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
     transform: scale(1);
   }
 }
@@ -277,6 +329,18 @@ select:focus {
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+@-webkit-keyframes animateBoardEndgame {
+  0% {
+    transform: scale(1);
+  }
+  70% {
+    transform: scale(0.7);
+  }
+  100% {
+    transform: scale(0.7);
+    opacity: 0;
   }
 }
 @keyframes animateBoardEndgame {
@@ -291,12 +355,30 @@ select:focus {
     opacity: 0;
   }
 }
+@-webkit-keyframes animateOverlayShow {
+  from {
+    transform: scale(0.7);
+  }
+  to {
+    transform: scale(1);
+  }
+}
 @keyframes animateOverlayShow {
   from {
     transform: scale(0.7);
   }
   to {
     transform: scale(1);
+  }
+}
+@-webkit-keyframes animateOverlayHide {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.7);
+    opacity: 0;
   }
 }
 @keyframes animateOverlayHide {
@@ -309,6 +391,16 @@ select:focus {
     opacity: 0;
   }
 }
+@-webkit-keyframes animateLineLeft {
+  from {
+    transform: rotate(-90deg);
+    height: 0;
+  }
+  to {
+    transform: rotate(-90deg);
+    height: 100%;
+  }
+}
 @keyframes animateLineLeft {
   from {
     transform: rotate(-90deg);
@@ -319,12 +411,30 @@ select:focus {
     height: 100%;
   }
 }
+@-webkit-keyframes animateLineTop {
+  from {
+    height: 0;
+  }
+  to {
+    height: 100%;
+  }
+}
 @keyframes animateLineTop {
   from {
     height: 0;
   }
   to {
     height: 100%;
+  }
+}
+@-webkit-keyframes animateLineDiagonalLeft {
+  from {
+    transform: rotate(-45deg);
+    height: 0;
+  }
+  to {
+    transform: rotate(-45deg);
+    height: 140%;
   }
 }
 @keyframes animateLineDiagonalLeft {
@@ -337,7 +447,7 @@ select:focus {
     height: 140%;
   }
 }
-@keyframes animateLineDiagonalRight {
+@-webkit-keyframes animateLineDiagonalRight {
   from {
     transform: rotate(45deg);
     height: 0;
@@ -347,5 +457,13 @@ select:focus {
     height: 140%;
   }
 }
-
-/*# sourceMappingURL=style.css.map */
+@keyframes animateLineDiagonalRight {
+  from {
+    transform: rotate(45deg);
+    height: 0;
+  }
+  to {
+    transform: rotate(45deg);
+    height: 140%;
+  }
+}/*# sourceMappingURL=style.css.map */
