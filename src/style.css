@@ -41,6 +41,10 @@ main {
   cursor: pointer;
 }
 
+.hide {
+  visibility: hidden;
+}
+
 @media screen and (min-width: 800px) {
   main {
     border: 1px solid rgb(var(--border-color));
@@ -114,6 +118,7 @@ select:focus {
   display: grid;
   grid-template-rows: repeat(3, 100px);
   grid-template-columns: repeat(3, 100px);
+  position: relative;
   width: -webkit-fit-content;
   width: -moz-fit-content;
   width: fit-content;
@@ -166,7 +171,6 @@ select:focus {
 }
 
 .overlay {
-  visibility: hidden;
   display: flex;
   flex-flow: column nowrap;
   justify-content: center;

@@ -42,8 +42,8 @@ const gameBoard = new class {
     }
 
     this.board = new Array(9);
-    this.boardElem.style.visibility = '';
     this.boardElem.onclick = this.onclickBoardHandler.bind(this);
+    displayController.showGameboard();
   }
 }
 
@@ -126,9 +126,9 @@ const gameFlow = new class {
 
   finishGame() {
     gameBoard.reset();
-    this.winner?.removeBacklight();
-
+    
     this.#mainPlayerElem = document.querySelector('.X-player');
+    this.winner?.removeBacklight();
     this.winner = null;
     this.isItFirstTurn = true;
     this.aiTimer = null;
@@ -281,6 +281,7 @@ const gameFlow = new class {
 
 const displayController = new class {
   #overlayElem = document.querySelector('.overlay');
+  #logElem = document.querySelector('.log');
   #XPlayerScore = 0;
   #OPlayerScore = 0;
 
@@ -293,9 +294,15 @@ const displayController = new class {
   }
 
   setLogMessage(str) {
-    let logElem = document.querySelector('.log');
+    this.#logElem.textContent = str;
+  }
 
-    logElem.textContent = str;
+  hideLog() {
+    this.#logElem.classList.add('hide');
+  }
+
+  showLog() {
+    this.#logElem.classList.remove('hide');
   }
 
   refreshPlayerScore(player) {
@@ -316,13 +323,12 @@ const displayController = new class {
   }
 
   showOverlay() {
-    this.#overlayElem.style.visibility = 'visible';
+    this.#overlayElem.classList.remove('hide');
     this.#overlayElem.onclick = gameFlow.finishGame.bind(gameFlow);
   }
 
   hideOverlay() {
-    this.#overlayElem.className = 'overlay';
-    this.#overlayElem.style.visibility = '';
+    this.#overlayElem.classList.add('hide');
     this.#overlayElem.onclick = null;
   }
 
@@ -349,8 +355,12 @@ const displayController = new class {
     }
   }
 
+  showGameboard() {
+    gameBoard.boardElem.classList.remove('hide');
+  }
+
   hideGameboard() {
-    gameBoard.boardElem.style.visibility = 'hidden';
+    gameBoard.boardElem.classList.add('hide');
   }
 
   isMarkAllowed(elem) {

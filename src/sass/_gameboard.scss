@@ -10,6 +10,7 @@
   grid-template-rows: repeat(3, 100px);
   grid-template-columns: repeat(3, 100px);
 
+  position: relative;
   width: fit-content;
   margin: auto;
   padding: 10px;
@@ -61,7 +62,6 @@
 }
 
 .overlay {
-  visibility: hidden;
   display: flex;
   flex-flow: column nowrap;
   justify-content: center;
