@@ -26,7 +26,7 @@ const gameBoard = new class {
     this.colorizeFieldText(field);
 
     this.board[index] = mark;
-    field.textContent = mark;
+    field.insertAdjacentHTML('afterbegin', `<div class="letterAnimation">${mark}</div>`);
   }
 
   colorizeFieldText(elem) {
@@ -37,7 +37,7 @@ const gameBoard = new class {
 
   reset() {
     for (let field of this.boardElem.querySelectorAll('.field')) {
-      field.textContent = '';
+      field.innerHTML = '';
       field.style.color = '';
     }
 
@@ -69,11 +69,9 @@ const gameFlow = new class {
         this.#playerWrapperElem.onclick = null;
         this.isPrevSelectedOpponentHuman = true;
 
-        displayController.setLogMessage('X Turn');
         displayController.resetPlayerScores();
       } else {
         aiLogic.setAIDifficulty();
-        displayController.setLogMessage('Select your player or start the game');
 
         if (this.isPrevSelectedOpponentHuman) {
           displayController.resetPlayerScores();
@@ -115,7 +113,7 @@ const gameFlow = new class {
       this.aiTimer = setTimeout(() => {
         gameBoard.setMark(aiLogic.getBestAIMoveIndex());
         this.nextTurn();
-      }, 1000);
+      }, 800);
     } else {
       this.currentPlayer = this.mainPlayer;
     }
@@ -125,6 +123,8 @@ const gameFlow = new class {
   }
 
   finishGame() {
+    const overlayElem = document.querySelector('.overlay');
+
     gameBoard.reset();
     
     this.#mainPlayerElem = document.querySelector('.X-player');
@@ -133,35 +133,33 @@ const gameFlow = new class {
     this.isItFirstTurn = true;
     this.aiTimer = null;
     
-    displayController.hideOverlay();
-    displayController.setDefaultBacklight();
+    displayController.hideLog();
 
-    if (this.#opponentPickerElem.value === 'human') {
-      displayController.setLogMessage('X Turn');
-    } else {
-      this.#playerWrapperElem.onclick = this.onPlayerElemClick.bind(this);
-      displayController.setLogMessage('Select your player or start the game');
+    if (!overlayElem.classList.contains('hide')) {
+      animation.startOverlayAnimationHide();
     }
     
     this.mainPlayer = null;
     this.opponent = null;
+
+    setTimeout(() => animation.startInitialAnimation());
   }
 
   nextTurn() {
     if (this.isGameOver()) {
       this.#assignWinner();
-      
-      displayController.hideGameboard();
-      displayController.showOverlay();
+      gameBoard.boardElem.onclick = null;
       displayController.setLogMessage('Game over!');
       
       if (!this.winner) {
         displayController.setOverlayMessage('draw');
         this.mainPlayer.removeBacklight();
+        animation.startBoardEndgameAnimation();
       } else {
         displayController.incrementPlayerScore(this.winner);
         displayController.refreshPlayerScore(this.winner);
         displayController.setOverlayMessage(this.winner.mark);
+        animation.insertWinningLine();
       }
 
       return;
@@ -178,7 +176,7 @@ const gameFlow = new class {
       this.aiTimer = setTimeout(() => {
         gameBoard.setMark(aiLogic.getBestAIMoveIndex());
         this.nextTurn();
-      }, 1000);
+      }, 800);
     }
   }
 
@@ -202,6 +200,7 @@ const gameFlow = new class {
 
   restart() {
     clearTimeout(this.aiTimer);
+    animation.cancelBoardAnimation();
     this.finishGame();
   }
 
@@ -224,6 +223,8 @@ const gameFlow = new class {
         && board[h + 1] === board[h + 2]
       ) {
         if (board[h] === this.mainPlayer.mark || board[h] === this.opponent.mark) {
+          animation.setLineStartLocation('left', h);
+
           return true;
         }
       }
@@ -236,6 +237,8 @@ const gameFlow = new class {
         && board[v + 3] === board[v + 6]
       ) {
         if (board[v] === this.mainPlayer.mark || board[v] === this.opponent.mark) {
+          animation.setLineStartLocation('top', v);
+
           return true;
         }
       }
@@ -248,6 +251,8 @@ const gameFlow = new class {
       && board[4] === board[8]
     ) {
       if (board[0] === this.mainPlayer.mark || board[0] === this.opponent.mark) {
+        animation.setLineStartLocation('diagonal', 0);
+
         return true;
       }
     }
@@ -258,6 +263,8 @@ const gameFlow = new class {
       && board[4] === board[6]
     ) {
       if (board[2] === this.mainPlayer.mark || board[2] === this.opponent.mark) {
+        animation.setLineStartLocation('diagonal', 2);
+
         return true;
       }
     }
@@ -293,18 +300,6 @@ const displayController = new class {
     }
   }
 
-  setLogMessage(str) {
-    this.#logElem.textContent = str;
-  }
-
-  hideLog() {
-    this.#logElem.classList.add('hide');
-  }
-
-  showLog() {
-    this.#logElem.classList.remove('hide');
-  }
-
   refreshPlayerScore(player) {
     let mark = player.mark;
     let playerScoreElem = document.querySelector(`.${mark}-player .score`);
@@ -322,6 +317,30 @@ const displayController = new class {
     this.#OPlayerScore = 0;
   }
 
+  setInitialLogMessage() {
+    const playerWrapperElem = document.querySelector('.player-wrapper');
+    const opponentPickerElem = document.querySelector('select');
+
+    if (opponentPickerElem.value === 'human') {
+      this.setLogMessage('X Turn');
+    } else {
+      playerWrapperElem.onclick = gameFlow.onPlayerElemClick.bind(gameFlow);
+      this.setLogMessage('Select your player or start the game');
+    }
+  }
+
+  setLogMessage(str) {
+    this.#logElem.textContent = str;
+  }
+
+  showLog() {
+    this.#logElem.classList.remove('hide');
+  }
+
+  hideLog() {
+    this.#logElem.classList.add('hide');
+  } 
+
   showOverlay() {
     this.#overlayElem.classList.remove('hide');
     this.#overlayElem.onclick = gameFlow.finishGame.bind(gameFlow);
@@ -329,6 +348,7 @@ const displayController = new class {
 
   hideOverlay() {
     this.#overlayElem.classList.add('hide');
+    this.#overlayElem.classList.remove('X-win', 'O-win', 'draw');
     this.#overlayElem.onclick = null;
   }
 
@@ -570,6 +590,162 @@ const aiLogic = new class {
     }
 
     return index;
+  }
+}
+
+const animation = new class {
+  #logElem = document.querySelector('.log');
+  #overlayElem = document.querySelector('.overlay');
+  #lineStartLocation = {
+    direction: '',
+    index: -1,
+  };
+
+  constructor() {
+    this.startInitialAnimation();
+
+    this.#logElem.onanimationend = this.removeLogAnimation.bind(this);
+
+    this.#overlayElem.onanimationend = () => {
+      const animationName = getComputedStyle(this.#overlayElem).animationName;
+
+      if (animationName === 'animateOverlayShow') {
+        this.removeOverlayAnimation();
+      } else {
+        this.removeOverlayAnimation();
+        displayController.hideOverlay();
+      }
+    }
+
+    gameBoard.boardElem.onanimationend = (e) => {
+      if (e.target !== gameBoard.boardElem) return;
+
+      const animationName = getComputedStyle(gameBoard.boardElem).animationName;
+
+      if (animationName === 'animateBoard') {
+        displayController.setInitialLogMessage();
+        displayController.showLog();
+        this.startLogAnimation();
+        displayController.setDefaultBacklight();
+      } else {
+        displayController.hideGameboard();
+        displayController.showOverlay();
+        this.removeWinningLine();
+        this.startOverlayAnimationShow();
+      }
+      
+      this.removeBoardAnimation();
+    };
+
+  }
+
+  startBoardAnimation() {
+    gameBoard.boardElem.classList.add('boardAnimation');
+  }
+
+  startBoardEndgameAnimation() {
+    gameBoard.boardElem.classList.add('boardAnimationEndgame');
+  }
+
+  cancelBoardAnimation() {
+    gameBoard.boardElem.style.animationName = 'test';
+    this.removeWinningLine();
+    this.removeBoardAnimation();
+    gameBoard.boardElem.style.animationName = '';
+  }
+
+  removeBoardAnimation() {
+    gameBoard.boardElem.classList.remove('boardAnimation', 'boardAnimationEndgame');
+  }
+
+  startLogAnimation() {
+    this.#logElem.classList.add('logAnimation');
+  }
+
+  removeLogAnimation() {
+    this.#logElem.classList.remove('logAnimation');
+  }
+
+  startOverlayAnimationShow() {
+    this.#overlayElem.classList.add('overlayAnimationShow');
+  }
+
+  startOverlayAnimationHide() {
+    this.#overlayElem.classList.add('overlayAnimationHide');
+  }
+
+  removeOverlayAnimation() {
+    this.#overlayElem.classList.remove('overlayAnimationShow', 'overlayAnimationHide');
+  }
+
+  startInitialAnimation() {
+    this.cancelBoardAnimation();
+
+    document.querySelector('.X-player').classList.remove('backlight');
+    document.querySelector('.O-player').classList.remove('backlight');
+
+    this.startBoardAnimation();
+  }
+
+  insertWinningLine() {
+    const index = this.#lineStartLocation.index;
+    const lineElem = document.createElement('div');
+    const field = document.querySelector(`.field[data-field-id="${index}"]`);
+    const fieldHeight = field.offsetHeight;
+    const fieldWidth = field.offsetWidth;
+
+    lineElem.className = 'line lineAnimation';
+    lineElem.style.backgroundColor = this.getLineBgColor();
+    gameBoard.boardElem.append(lineElem);
+    lineElem.onanimationend = this.startBoardEndgameAnimation.bind(this);
+
+    const boardStyle = getComputedStyle(gameBoard.boardElem);
+    const lineStyle = getComputedStyle(lineElem);
+    const p = Number.parseInt(boardStyle.padding);
+    const w = Number.parseInt(lineStyle.width) / 2;
+
+    let leftMiddleCoords = (fieldWidth * (index + 1)) - fieldWidth / 2 + p - w;
+    let topMiddleCoords = (fieldHeight * (index / 3 + 1)) - fieldHeight / 2 + p - w;
+
+    switch(this.#lineStartLocation.direction) {
+      case 'left':
+        lineElem.style.left = '0px';
+        lineElem.style.top = `${topMiddleCoords}px`;
+        lineElem.style.animationName = 'animateLineLeft';
+        break;
+      case 'top':
+        lineElem.style.left = `${leftMiddleCoords}px`;
+        lineElem.style.top = '0px';
+        lineElem.style.animationName = 'animateLineTop';
+        break;
+      case 'diagonal':
+        lineElem.style.top = '0px';
+
+        if (index === 0) {
+          lineElem.style.left = '0px';
+          lineElem.style.animationName = 'animateLineDiagonalLeft';
+        } else {
+          lineElem.style.right = '0px';
+          lineElem.style.animationName = 'animateLineDiagonalRight';
+        }
+
+        break;
+    }
+  }
+  
+  setLineStartLocation(dir, ind) {
+    this.#lineStartLocation.direction = dir;
+    this.#lineStartLocation.index = ind;
+  }
+
+  getLineBgColor() {
+    const mark = gameFlow.winner.mark.toLowerCase();
+    
+    return `rgb(var(--${mark}-player-color)`;
+  }
+
+  removeWinningLine() {
+    document.querySelector('.line')?.remove();
   }
 }
 

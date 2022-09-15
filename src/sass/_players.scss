@@ -35,6 +35,8 @@ select:focus {
   border: 1px solid lightgray;
   border-radius: 6px;
   cursor: pointer;
+
+  transition: box-shadow 0.3s;
 }
 
 .X-player.backlight {
